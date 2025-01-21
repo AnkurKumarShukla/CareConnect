@@ -13,7 +13,7 @@ def initialize_session_state():
     """Initialize session state variables"""
     print("Initializing session state")
     if 'model_name' not in st.session_state:
-        st.session_state.model_name = 'mixtral-8x7b'
+        st.session_state.model_name = 'mistral-large2'
     if 'category_value' not in st.session_state:
         st.session_state.category_value = 'ALL'
     if 'rag' not in st.session_state:
@@ -89,7 +89,7 @@ def initialize_handlers():
     return True
 
 def main():
-    st.title(":speech_balloon: Chat Document Assistant with Snowflake Cortex")
+    st.title(":speech_balloon: CareConnect")
 
     # Initialize session state
     initialize_session_state()

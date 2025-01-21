@@ -14,9 +14,9 @@ class ConversationHandler:
         self.session = session
         self.history: List[Message] = []
         self.available_models = [
+            'mistral-large2',
             'mixtral-8x7b',
-            'snowflake-arctic',
-            'mistral-large',
+            'snowflake-arctic',           
             'llama3-8b',
             'llama3-70b',
             'reka-flash',
