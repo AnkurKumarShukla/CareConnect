@@ -9,7 +9,10 @@ CareConnect processes medical data by storing it in a **Snowflake database**, wh
 Users interact through a **Streamlit** interface to upload prescriptions or ask health-related questions, with relevant data extracted and matched from the database. This information is then processed by the **Mistral AI model** to generate accurate, context-aware responses, streamlining diagnosis and decision-making in healthcare.
 
 
-Uploading Untitled video - Made with Clipchamp (2).mp4…
+
+https://github.com/user-attachments/assets/b0a5eb18-447d-41ae-99b7-5f74348c4341
+
+
 
 
 ## 🛠 How We Built It
