@@ -7,3 +7,5 @@ RAG_Using_Snowflake_Cortex_Search_Setup_Notebook.ipynb
 test.py
 envs/
 backend/.env
+.auth_credentials.json
+backend/.auth_credentials.json
