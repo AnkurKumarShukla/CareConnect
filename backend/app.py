@@ -4,14 +4,77 @@ from conversation_handler import ConversationHandler
 from cortex_completion import CortexCompletion
 import os
 import time
+import hashlib
 from upload_prescription import upload_and_extract_prescription  # Import the prescription functionality
 from snowflake.snowpark.context import get_active_session
 
+HASH_FILE = ".password_hash"
+DEFAULT_PASSWORD = "changeme"
 
+def _hash_password(password: str, salt: str = None) -> str:
+    if salt is None:
+        salt = os.urandom(16).hex()
+    hashed = hashlib.sha256((salt + password).encode()).hexdigest()
+    return f"{salt}:{hashed}"
+
+def verify_password(password: str) -> bool:
+    if not os.path.exists(HASH_FILE):
+        return password == DEFAULT_PASSWORD
+    try:
+        with open(HASH_FILE, "r") as f:
+            stored = f.read().strip()
+        if ":" not in stored:
+            return False
+        salt, expected_hash = stored.split(":", 1)
+        actual_hash = hashlib.sha256((salt + password).encode()).hexdigest()
+        return actual_hash == expected_hash
+    except Exception:
+        return False
+
+def save_password(password: str) -> None:
+    hashed_entry = _hash_password(password)
+    with open(HASH_FILE, "w") as f:
+        f.write(hashed_entry)
+
+def login_screen():
+    st.title(":lock: CareConnect Login")
+    with st.form("login_form"):
+        password_input = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Login")
+        if submitted:
+            if verify_password(password_input):
+                st.session_state.authenticated = True
+                st.rerun()
+            else:
+                st.error("Incorrect password. Please try again.")
+
+def render_auth_sidebar():
+    if st.sidebar.button("Logout"):
+        st.session_state.authenticated = False
+        st.rerun()
+
+    with st.sidebar.expander("Change Password"):
+        with st.form("change_password_form"):
+            current_pw = st.text_input("Current Password", type="password")
+            new_pw = st.text_input("New Password", type="password")
+            confirm_pw = st.text_input("Confirm New Password", type="password")
+            submit_change = st.form_submit_button("Change Password")
+            if submit_change:
+                if not verify_password(current_pw):
+                    st.error("Current password is incorrect.")
+                elif not new_pw:
+                    st.error("New password cannot be empty.")
+                elif new_pw != confirm_pw:
+                    st.error("New passwords do not match.")
+                else:
+                    save_password(new_pw)
+                    st.success("Password changed successfully!")
 
 def initialize_session_state():
     """Initialize session state variables"""
     print("Initializing session state")
+    if 'authenticated' not in st.session_state:
+        st.session_state.authenticated = False
     if 'model_name' not in st.session_state:
         st.session_state.model_name = 'mistral-large2'
     if 'category_value' not in st.session_state:
