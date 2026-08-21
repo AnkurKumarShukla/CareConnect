@@ -96,6 +96,10 @@ def initialize_handlers():
 def main():
     st.title(":speech_balloon: CareConnect")
 
+    # Check authentication before initializing handlers or displaying features
+    if not check_authentication():
+        return
+
     # Initialize session state
     initialize_session_state()
     
