@@ -35,6 +35,10 @@ def config_sidebar(conversation_handler):
 def main():
     st.title(":speech_balloon: Cha Document Assistant with Snowflake Cortex")
     
+    # Check authentication before proceeding
+    if not check_authentication():
+        return
+    
     # Initialize connections and handlers
     connection = SnowflakeConnection()
     if not connection.connect():
