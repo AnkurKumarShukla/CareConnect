@@ -2,6 +2,7 @@ import streamlit as st
 from backend.connection import SnowflakeConnection
 from backend.conversation_handler import ConversationHandler
 from backend.cortex_completion import CortexCompletion
+from backend.auth import check_authentication
 
 def initialize_session_state():
     """Initialize session state variables"""
