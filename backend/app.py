@@ -7,6 +7,11 @@ import time
 from upload_prescription import upload_and_extract_prescription  # Import the prescription functionality
 from snowflake.snowpark.context import get_active_session
 
+try:
+    from auth import check_authentication
+except ImportError:
+    from backend.auth import check_authentication
+
 
 
 def initialize_session_state():
