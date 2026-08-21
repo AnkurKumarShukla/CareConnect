@@ -152,14 +152,21 @@ def initialize_handlers():
     return True
 
 def main():
-    st.title(":speech_balloon: CareConnect")
-
     # Initialize session state
     initialize_session_state()
+    
+    if not st.session_state.authenticated:
+        login_screen()
+        return
+
+    st.title(":speech_balloon: CareConnect")
     
     # Initialize handlers
     if not initialize_handlers():
         return
+
+    # Render auth sidebar controls
+    render_auth_sidebar()
 
     # Configure sidebar
     config_sidebar()
