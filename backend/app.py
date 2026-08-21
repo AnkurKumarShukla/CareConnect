@@ -1,4 +1,18 @@
 import streamlit as st
+try:
+    from backend.auth import (
+        init_auth_session,
+        is_authenticated,
+        render_login_screen,
+        render_auth_controls,
+    )
+except ImportError:
+    from auth import (
+        init_auth_session,
+        is_authenticated,
+        render_login_screen,
+        render_auth_controls,
+    )
 from connection import SnowflakeConnection
 from conversation_handler import ConversationHandler
 from cortex_completion import CortexCompletion
@@ -62,6 +76,8 @@ def config_sidebar():
     #             doc_name, url = doc
     #             st.markdown(f"- [{doc_name}]({url})")
 
+    render_auth_controls()
+
     with st.sidebar.expander("Session State"):
         # Filter out connection objects from display
         display_state = {k: v for k, v in st.session_state.items()
@@ -89,6 +105,11 @@ def initialize_handlers():
     return True
 
 def main():
+    init_auth_session()
+    if not is_authenticated():
+        render_login_screen()
+        return
+
     st.title(":speech_balloon: CareConnect")
 
     # Initialize session state
