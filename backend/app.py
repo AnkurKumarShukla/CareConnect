@@ -1,12 +1,19 @@
 import streamlit as st
-from connection import SnowflakeConnection
-from conversation_handler import ConversationHandler
-from cortex_completion import CortexCompletion
-import os
-import time
-from upload_prescription import upload_and_extract_prescription  # Import the prescription functionality
-from snowflake.snowpark.context import get_active_session
 
+try:
+    from auth import render_auth_page, render_user_sidebar
+    from connection import SnowflakeConnection
+    from conversation_handler import ConversationHandler
+    from cortex_completion import CortexCompletion
+    from upload_prescription import upload_and_extract_prescription
+except ImportError:
+    from backend.auth import render_auth_page, render_user_sidebar
+    from backend.connection import SnowflakeConnection
+    from backend.conversation_handler import ConversationHandler
+    from backend.cortex_completion import CortexCompletion
+    from backend.upload_prescription import upload_and_extract_prescription
+
+from snowflake.snowpark.context import get_active_session
 
 
 def initialize_session_state():
@@ -38,6 +45,8 @@ def get_snowflake_connection():
 
 def config_sidebar():
     """Configure sidebar options"""
+    render_user_sidebar()
+
     st.sidebar.selectbox(
         'Select your model:',
         st.session_state.conversation_handler.available_models,
@@ -55,17 +64,10 @@ def config_sidebar():
     st.sidebar.divider()
     st.session_state.show_documents = st.sidebar.checkbox("Show Source Documents", value=False)
 
-    # if st.session_state.show_documents:
-    #     with st.sidebar.expander("Related Documents", expanded=True):
-    #         st.write("The following documents are used to generate responses:")
-    #         for doc in st.session_state.get('related_docs', []):
-    #             doc_name, url = doc
-    #             st.markdown(f"- [{doc_name}]({url})")
-
     with st.sidebar.expander("Session State"):
-        # Filter out connection objects from display
+        # Filter out connection objects and users db from display
         display_state = {k: v for k, v in st.session_state.items()
-                         if k not in ['connection', 'conversation_handler', 'cortex_completion']}
+                         if k not in ['connection', 'conversation_handler', 'cortex_completion', 'users_db']}
         st.write(display_state)
 
 def initialize_handlers():
@@ -90,6 +92,10 @@ def initialize_handlers():
 
 def main():
     st.title(":speech_balloon: CareConnect")
+
+    # Check authentication first
+    if not render_auth_page():
+        return
 
     # Initialize session state
     initialize_session_state()
@@ -121,41 +127,40 @@ def main():
         with st.chat_message("user"):
             st.write(question)
 
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking..."):
-                # Get response
-                prescription_text = " ".join(prescription_text_chunks) if prescription_text_chunks else ""
+        with st.chat_message("assistant"), st.spinner("Thinking..."):
+            # Get response
+            prescription_text = " ".join(prescription_text_chunks) if prescription_text_chunks else ""
 
-                response_text, relative_paths = st.session_state.cortex_completion.complete(
-                    question,
-                    st.session_state.model_name,
-                    st.session_state.rag,
-                    prescription_text,
-                    st.session_state.category_value
-                )
-                
-                st.write(response_text)
-                # print(relative_paths)
-                # Store the conversation
-                st.session_state.conversation_handler.add_message("user", question)
-                st.session_state.conversation_handler.add_message("assistant", response_text)
+            response_text, relative_paths = st.session_state.cortex_completion.complete(
+                question,
+                st.session_state.model_name,
+                st.session_state.rag,
+                prescription_text,
+                st.session_state.category_value
+            )
+            
+            st.write(response_text)
+            # print(relative_paths)
+            # Store the conversation
+            st.session_state.conversation_handler.add_message("user", question)
+            st.session_state.conversation_handler.add_message("assistant", response_text)
 
-                # Cache related documents
-                st.session_state.related_docs = [
-                    (path, st.session_state.cortex_completion.get_document_url(path)) for path in relative_paths
-                ]
-                # config_sidebar()
-                session = get_active_session()
-                if relative_paths != "None" and st.session_state.show_documents:
-                    with st.sidebar.expander("Related Documents" , expanded=True):
-                        for path in relative_paths:
-                            cmd2 = f"select GET_PRESIGNED_URL(@docs, '{path}', 360) as URL_LINK from directory(@docs)"
-                            df_url_link = session.sql(cmd2).to_pandas()
-                            url_link = df_url_link._get_value(0,'URL_LINK')
-        
-                            display_url = f"Doc: [{path}]({url_link})"
-                            st.sidebar.markdown(display_url)
-                
+            # Cache related documents
+            st.session_state.related_docs = [\
+                (path, st.session_state.cortex_completion.get_document_url(path)) for path in relative_paths\
+            ]
+            # config_sidebar()
+            session = get_active_session()
+            if relative_paths != "None" and st.session_state.show_documents:
+                with st.sidebar.expander("Related Documents" , expanded=True):
+                    for path in relative_paths:
+                        cmd2 = f"select GET_PRESIGNED_URL(@docs, '{path}', 360) as URL_LINK from directory(@docs)"
+                        df_url_link = session.sql(cmd2).to_pandas()
+                        url_link = df_url_link._get_value(0,'URL_LINK')
+    
+                        display_url = f"Doc: [{path}]({url_link})"
+                        st.sidebar.markdown(display_url)
+            
 
 if __name__ == "__main__":
     main()

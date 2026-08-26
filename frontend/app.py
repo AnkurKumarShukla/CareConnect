@@ -1,7 +1,10 @@
 import streamlit as st
+
+from backend.auth import render_auth_page, render_user_sidebar
 from backend.connection import SnowflakeConnection
 from backend.conversation_handler import ConversationHandler
 from backend.cortex_completion import CortexCompletion
+
 
 def initialize_session_state():
     """Initialize session state variables"""
@@ -14,6 +17,8 @@ def initialize_session_state():
 
 def config_sidebar(conversation_handler):
     """Configure sidebar options"""
+    render_user_sidebar()
+    
     st.sidebar.selectbox(
         'Select your model:',
         conversation_handler.available_models,
@@ -29,10 +34,15 @@ def config_sidebar(conversation_handler):
     st.session_state.rag = st.sidebar.checkbox('Use your own documents as context?', value=True)
     
     with st.sidebar.expander("Session State"):
-        st.write(st.session_state)
+        display_state = {k: v for k, v in st.session_state.items() if k != "users_db"}
+        st.write(display_state)
 
 def main():
-    st.title(":speech_balloon: Cha Document Assistant with Snowflake Cortex")
+    st.title(":speech_balloon: CareConnect - Document Assistant with Snowflake Cortex")
+    
+    # Check authentication first
+    if not render_auth_page():
+        return
     
     # Initialize connections and handlers
     connection = SnowflakeConnection()
