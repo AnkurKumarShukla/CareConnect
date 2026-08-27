@@ -1,12 +1,17 @@
 import streamlit as st
-from connection import SnowflakeConnection
-from conversation_handler import ConversationHandler
-from cortex_completion import CortexCompletion
-import os
-import time
-from upload_prescription import upload_and_extract_prescription  # Import the prescription functionality
+try:
+    from connection import SnowflakeConnection
+    from conversation_handler import ConversationHandler
+    from cortex_completion import CortexCompletion
+    from upload_prescription import upload_and_extract_prescription
+    from auth import require_auth, render_auth_sidebar, initialize_auth_state
+except ImportError:
+    from backend.connection import SnowflakeConnection
+    from backend.conversation_handler import ConversationHandler
+    from backend.cortex_completion import CortexCompletion
+    from backend.upload_prescription import upload_and_extract_prescription
+    from backend.auth import require_auth, render_auth_sidebar, initialize_auth_state
 from snowflake.snowpark.context import get_active_session
-
 
 
 def initialize_session_state():
@@ -38,6 +43,9 @@ def get_snowflake_connection():
 
 def config_sidebar():
     """Configure sidebar options"""
+    render_auth_sidebar()
+    st.sidebar.divider()
+
     st.sidebar.selectbox(
         'Select your model:',
         st.session_state.conversation_handler.available_models,
@@ -54,13 +62,6 @@ def config_sidebar():
 
     st.sidebar.divider()
     st.session_state.show_documents = st.sidebar.checkbox("Show Source Documents", value=False)
-
-    # if st.session_state.show_documents:
-    #     with st.sidebar.expander("Related Documents", expanded=True):
-    #         st.write("The following documents are used to generate responses:")
-    #         for doc in st.session_state.get('related_docs', []):
-    #             doc_name, url = doc
-    #             st.markdown(f"- [{doc_name}]({url})")
 
     with st.sidebar.expander("Session State"):
         # Filter out connection objects from display
@@ -89,6 +90,10 @@ def initialize_handlers():
     return True
 
 def main():
+    initialize_auth_state()
+    if not require_auth("CareConnect"):
+        return
+
     st.title(":speech_balloon: CareConnect")
 
     # Initialize session state
@@ -135,7 +140,6 @@ def main():
                 )
                 
                 st.write(response_text)
-                # print(relative_paths)
                 # Store the conversation
                 st.session_state.conversation_handler.add_message("user", question)
                 st.session_state.conversation_handler.add_message("assistant", response_text)
@@ -144,7 +148,6 @@ def main():
                 st.session_state.related_docs = [
                     (path, st.session_state.cortex_completion.get_document_url(path)) for path in relative_paths
                 ]
-                # config_sidebar()
                 session = get_active_session()
                 if relative_paths != "None" and st.session_state.show_documents:
                     with st.sidebar.expander("Related Documents" , expanded=True):
