@@ -2,6 +2,7 @@ import streamlit as st
 from backend.connection import SnowflakeConnection
 from backend.conversation_handler import ConversationHandler
 from backend.cortex_completion import CortexCompletion
+from backend.auth import require_auth, render_auth_sidebar, initialize_auth_state
 
 def initialize_session_state():
     """Initialize session state variables"""
@@ -14,6 +15,9 @@ def initialize_session_state():
 
 def config_sidebar(conversation_handler):
     """Configure sidebar options"""
+    render_auth_sidebar()
+    st.sidebar.divider()
+
     st.sidebar.selectbox(
         'Select your model:',
         conversation_handler.available_models,
@@ -32,6 +36,10 @@ def config_sidebar(conversation_handler):
         st.write(st.session_state)
 
 def main():
+    initialize_auth_state()
+    if not require_auth("Cha Document Assistant"):
+        return
+
     st.title(":speech_balloon: Cha Document Assistant with Snowflake Cortex")
     
     # Initialize connections and handlers

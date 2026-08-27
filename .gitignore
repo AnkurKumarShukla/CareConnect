@@ -7,3 +7,6 @@ RAG_Using_Snowflake_Cortex_Search_Setup_Notebook.ipynb
 test.py
 envs/
 backend/.env
+.password_hash
+backend/.password_hash
+.pytest_cache/
