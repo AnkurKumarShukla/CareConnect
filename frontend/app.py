@@ -2,9 +2,14 @@ import streamlit as st
 from backend.connection import SnowflakeConnection
 from backend.conversation_handler import ConversationHandler
 from backend.cortex_completion import CortexCompletion
+try:
+    from backend.auth import render_auth_ui, render_user_menu, init_auth_session_state
+except ImportError:
+    from auth import render_auth_ui, render_user_menu, init_auth_session_state
 
 def initialize_session_state():
     """Initialize session state variables"""
+    init_auth_session_state()
     if 'model_name' not in st.session_state:
         st.session_state.model_name = 'mixtral-8x7b'
     if 'category_value' not in st.session_state:
@@ -14,6 +19,7 @@ def initialize_session_state():
 
 def config_sidebar(conversation_handler):
     """Configure sidebar options"""
+    render_user_menu()
     st.sidebar.selectbox(
         'Select your model:',
         conversation_handler.available_models,
@@ -32,6 +38,13 @@ def config_sidebar(conversation_handler):
         st.write(st.session_state)
 
 def main():
+    # Initialize session state
+    initialize_session_state()
+
+    # Check authentication
+    if not render_auth_ui():
+        return
+
     st.title(":speech_balloon: Cha Document Assistant with Snowflake Cortex")
     
     # Initialize connections and handlers
@@ -43,9 +56,6 @@ def main():
     session = connection.get_session()
     conversation_handler = ConversationHandler(session)
     cortex_completion = CortexCompletion(session, connection.get_root())
-    
-    # Initialize session state
-    initialize_session_state()
     
     # Configure sidebar
     config_sidebar(conversation_handler)

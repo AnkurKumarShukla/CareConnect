@@ -6,12 +6,17 @@ import os
 import time
 from upload_prescription import upload_and_extract_prescription  # Import the prescription functionality
 from snowflake.snowpark.context import get_active_session
+try:
+    from backend.auth import render_auth_ui, render_user_menu, init_auth_session_state
+except ImportError:
+    from auth import render_auth_ui, render_user_menu, init_auth_session_state
 
 
 
 def initialize_session_state():
     """Initialize session state variables"""
     print("Initializing session state")
+    init_auth_session_state()
     if 'model_name' not in st.session_state:
         st.session_state.model_name = 'mistral-large2'
     if 'category_value' not in st.session_state:
@@ -38,6 +43,7 @@ def get_snowflake_connection():
 
 def config_sidebar():
     """Configure sidebar options"""
+    render_user_menu()
     st.sidebar.selectbox(
         'Select your model:',
         st.session_state.conversation_handler.available_models,
@@ -89,10 +95,13 @@ def initialize_handlers():
     return True
 
 def main():
-    st.title(":speech_balloon: CareConnect")
-
     # Initialize session state
     initialize_session_state()
+    
+    if not render_auth_ui():
+        return
+
+    st.title(":speech_balloon: CareConnect")
     
     # Initialize handlers
     if not initialize_handlers():
