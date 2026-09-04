@@ -4,6 +4,7 @@ from typing import Tuple, List, Dict, Any
 from conversation_handler import ConversationHandler
 
 class CortexCompletion:
+    # Initialize the Cortex completion service and search configuration
     def __init__(self, session, root):
         self.session = session
         self.root = root
