@@ -1,3 +1,4 @@
+# Snowflake connection and session management for CareConnect backend.
 import os
 from dotenv import load_dotenv
 from snowflake.connector import connect
