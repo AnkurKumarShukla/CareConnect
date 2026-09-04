@@ -1,3 +1,4 @@
+<!-- CareConnect is an AI-powered healthcare platform for processing medical data and prescription documents. -->
 # CareConnect: AI-Powered Healthcare Data Processing
 
 ## 🏥 Inspiration
