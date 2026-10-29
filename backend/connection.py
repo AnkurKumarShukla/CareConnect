@@ -1,3 +1,4 @@
+# Snowflake/Snowpark connection and session wrapper for the CareConnect backend; reads Snowflake credentials from environment variables loaded from .env by load_dotenv.
 import os
 from dotenv import load_dotenv
 from snowflake.connector import connect
