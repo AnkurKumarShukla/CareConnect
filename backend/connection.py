@@ -1,3 +1,4 @@
+# Provides the Snowflake/Snowpark connection and session wrapper for the CareConnect backend.
 import os
 from dotenv import load_dotenv
 from snowflake.connector import connect
