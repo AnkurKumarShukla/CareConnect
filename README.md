@@ -51,6 +51,8 @@ https://github.com/user-attachments/assets/b0a5eb18-447d-41ae-99b7-5f74348c4341
 
 ### Run Locally
 
+> **Note:** The backend is started from the `backend` folder.
+
 1. Clone this repository:
    ```bash
    git clone https://github.com/AnkurKumarShukla/CareConnect.git
